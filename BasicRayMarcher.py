@@ -67,7 +67,7 @@ class Light():
         self.Lumens = Lumens
         
 def SceneDF(Pos):
-    return min(Sphere(Pos - np.array([3.,0.,1.]), 1.), Pos[2])
+    return min(Sphere(Pos - np.array([3.,0.,2.]), 1.), Pos[2])
     
 
 def RayMarcher(r_o, r_d):
@@ -135,7 +135,7 @@ def GetNormal(p):
     zprime = SceneDF(p - e*z_hat)
     return (centerDistance-np.array([xprime,yprime,zprime]))/e
     
-def GetLight(p, Lights):
+def GetLight(p, Lights, shadows = True):
     '''
     inputs
     ------
@@ -147,9 +147,19 @@ def GetLight(p, Lights):
     -------
     0 to 1, light intensity on that surface
     '''
+    #Calculate angle from light
     L = Norm(Lights.Pos - p) #Direction to light source
     N = GetNormal(p)
-    return np.clip(np.dot(L,N),0.,1.)
+    B = np.clip(np.dot(L,N),0.,1.) # Brightness
+    
+    #Calculate shadows
+    if shadows:
+        s = RayMarcher(p + 2*MIN_STEP*N, L)
+        if s<np.sqrt(np.sum((Lights.Pos - p)**2)):
+            #Shadow
+            B *= 0.2
+    
+    return B
     
     
 
@@ -199,11 +209,11 @@ def GetGrid(Camera, Lights):
     return Grid
     
 if __name__ == "__main__":
-    my_Camera = Camera(Zoom=0.5, Dir = np.array([1.,0.,-0.2]),
-                                 Pos = np.array([0.0,0.0,1.0]), 
-                                 Res = np.array([180,64]))
+    my_Camera = Camera(Zoom=0.5, Dir = np.array([1.,0.2,-0.1]),
+                                 Pos = np.array([0.0,0.0,1.5]), 
+                                 Res = np.array([120,46]))
                                  
-    my_Light = Light( Pos = np.array([2,4,4]))
+    my_Light = Light( Pos = np.array([2,4,6]))
     start_time = time.time()
     Grid = GetGrid(my_Camera, my_Light)
     os.system('cls' if os.name == 'nt' else 'clear')
