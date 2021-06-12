@@ -7,9 +7,12 @@ import time
 #Z is the vertical axis
 
 #Define constants
-MAX_STEPS = 10 #int
-MAX_DIST = 10. #float
+MAX_STEPS = 100 #int
+MAX_DIST = 100. #float
 MIN_STEP = 0.01 #float the distance at which a hit is registered
+x_hat = np.array([1.,0.,0.])
+y_hat = np.array([0.,1.,0.])
+z_hat = np.array([0.,0.,1.])
 
 def Norm(vector):
     '''
@@ -114,6 +117,41 @@ def GetHV(d):
     
     return V,H
     
+def GetNormal(p):
+    '''
+    input
+    -----
+    p: vec3 numpy array
+        the positon of where the norm is to be calculated
+    
+    output
+    ------
+    The normal vector to the surface vec3 numpy array
+    '''
+    e = 0.005
+    centerDistance = SceneDF(p)
+    xprime = SceneDF(p - e*x_hat)
+    yprime = SceneDF(p - e*y_hat)
+    zprime = SceneDF(p - e*z_hat)
+    return (centerDistance-np.array([xprime,yprime,zprime]))/e
+    
+def GetLight(p, Lights):
+    '''
+    inputs
+    ------
+    p: vec3 numpy array
+        position of surface to detemine
+    Lights: Light object
+    
+    outputs
+    -------
+    0 to 1, light intensity on that surface
+    '''
+    L = Norm(Lights.Pos - p) #Direction to light source
+    N = GetNormal(p)
+    return np.clip(np.dot(L,N),0.,1.)
+    
+    
 
 def mainImage(pixel, Camera, Lights):
     '''
@@ -137,9 +175,11 @@ def mainImage(pixel, Camera, Lights):
     ro = Camera.Pos #ray_orign (camera position)
     rd = Norm(Camera.Zoom*Camera.Dir + uv[0]*H + uv[1]*V) #Ray direction
     
-    s = RayMarcher(ro, rd) #Distance untill hit 
+    s = RayMarcher(ro, rd) #Distance untill hit
     
-    return s
+    end_pos = ro +s*rd
+    
+    return GetLight(end_pos, Lights)
     
 def GetGrid(Camera, Lights):
     '''
@@ -161,8 +201,9 @@ def GetGrid(Camera, Lights):
 if __name__ == "__main__":
     my_Camera = Camera(Zoom=0.5, Dir = np.array([1.,0.,-0.2]),
                                  Pos = np.array([0.0,0.0,1.0]), 
-                                 Res = np.array([80,40]))
-    my_Light = Light()
+                                 Res = np.array([180,64]))
+                                 
+    my_Light = Light( Pos = np.array([2,4,4]))
     start_time = time.time()
     Grid = GetGrid(my_Camera, my_Light)
     os.system('cls' if os.name == 'nt' else 'clear')

@@ -20,7 +20,33 @@ def element_map(f, Grid):
     new_Grid = [[f(Grid[y][x]) for x in range(x_size)] for y in range(y_size)]
     return new_Grid
 
+
 def GetChar(num):
+    '''
+    Input
+    -----
+    num: float
+        0<num<1
+    
+    OutPut
+    ------
+    char 
+    the character linked to the number
+    
+    #Based on lighting 
+    '''
+    if num>1 or num<0:
+        print("Error, " + str(num))
+    return bright_map[np.int(num*len(bright_map)-0.0001)] #-0.0001 in case norm is directly inline with light
+    
+
+    
+  
+
+
+
+
+def GetCharDist(num):
     '''
     Input
     -----
@@ -30,9 +56,13 @@ def GetChar(num):
     ------
     char 
     the character linked to the number
+    
+    based on distance
     '''
     num = min(len(bright_map)-1, num) #-0.5 as have 12 elements from 0 to 11 # Could do -1
     return bright_map[-(np.int(num)+1)]
+
+
     
 
 def TextDisplay(Grid):
