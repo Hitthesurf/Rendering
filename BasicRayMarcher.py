@@ -127,6 +127,9 @@ def GetNormal(p):
     output
     ------
     The normal vector to the surface vec3 numpy array
+    
+    The works as we are calculating the numerical derivative of the multivariate function SceneDF
+    which gives us the normal direction vector
     '''
     e = 0.005
     centerDistance = SceneDF(p)
@@ -211,7 +214,7 @@ def GetGrid(Camera, Lights):
 if __name__ == "__main__":
     my_Camera = Camera(Zoom=0.5, Dir = np.array([1.,0.2,-0.1]),
                                  Pos = np.array([0.0,0.0,1.5]), 
-                                 Res = np.array([120,46]))
+                                 Res = np.array([180,64]))
                                  
     my_Light = Light( Pos = np.array([2,4,6]))
     start_time = time.time()
