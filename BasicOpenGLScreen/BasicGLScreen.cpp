@@ -6,6 +6,13 @@
 // -lopengl32 -lglfw3 -lgdi32 -luser32 -lkernel32
 //g++.exe "$(FILE_NAME)" -o $(NAME_PART) -lopengl32 -lglfw3 -lgdi32 -luser32 -lkernel32
 
+void processInput(GLFWwindow *window)
+{
+    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+}
+
+
 int main(void)
 {
     GLFWwindow* window;
@@ -29,6 +36,7 @@ int main(void)
     float counter = 0.0;
     while (!glfwWindowShouldClose(window))
     {
+        processInput(window);
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
         
@@ -36,6 +44,9 @@ int main(void)
         glVertex2f(-0.5+sin(counter),-0.5);
         glVertex2f(0.0,0.5);
         glVertex2f(0.5,-0.5);
+        glVertex2f(0.5,0.5);
+        glVertex2f(0.7,0.5);
+        glVertex2f(0.7,0.7);
         glEnd();
         counter += 0.1;
         
