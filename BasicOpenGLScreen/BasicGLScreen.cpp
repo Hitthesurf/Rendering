@@ -1,5 +1,6 @@
 //#define GLFW_DLL //Only if dynamic lib
 #include <GLFW/glfw3.h>
+#include <cmath>
 
 //Linker section, libs to include
 // -lopengl32 -lglfw3 -lgdi32 -luser32 -lkernel32
@@ -25,11 +26,19 @@ int main(void)
     glfwMakeContextCurrent(window);
 
     /* Loop until the user closes the window */
+    float counter = 0.0;
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
-
+        
+        glBegin(GL_TRIANGLES);
+        glVertex2f(-0.5+sin(counter),-0.5);
+        glVertex2f(0.0,0.5);
+        glVertex2f(0.5,-0.5);
+        glEnd();
+        counter += 0.1;
+        
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
 
