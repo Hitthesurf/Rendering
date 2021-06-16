@@ -19,15 +19,19 @@
 
 //Should read in from files
 const char *vertexShaderSource = "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
+    "layout (location = 0) in vec3 aPos; layout (location = 1) in vec3 aColor;\n"
+    "out vec4 vertexColor;"
     "void main()\n"
     "{\n"
-    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-    "}\0";
+    "   gl_Position = vec4(aPos.x, aPos.y-0.2, aPos.z, 1.0);\n"
+    "   vertexColor = vec4(aPos.x, 0.0,0.0,1.0)+vec4(aColor,0.0);"
+    "}\n";
 
 const char *fragmentShaderSource = "#version 330 core \n"
+"in vec4 vertexColor;"
 "out vec4 FragColor;"
-"void main(){FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);} ";
+"uniform vec4 ourColor;"
+"void main(){FragColor = vertexColor+ourColor;} ";
 
 void processInput(GLFWwindow *window)
 {
@@ -115,7 +119,7 @@ int main()
     }
     
     //Use the pipeline we created
-    glUseProgram(shaderProgram);
+    glUseProgram(shaderProgram);//Can also be called in render loop
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader); 
     
@@ -129,12 +133,12 @@ int main()
     //Set up vertex data and buffers
     
     float vertices[] = {
-         0.5f,  0.5f, 0.0f,  // top right
-         0.5f, -0.5f, 0.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f,  // bottom left
-        -0.5f,  0.5f, 0.0f,   // top left
-         -1.0, 0.5, 0.0,
-         -0.5,0.0,0.0
+         0.5f,  0.5f, 0.0f, 1.0,0.0,0.0, // top right
+         0.5f, -0.5f, 0.0f, 0.0,1.0,0.0, // bottom right
+        -0.5f, -0.5f, 0.0f, 0.0,0.0,1.0, // bottom left
+        -0.5f,  0.5f, 0.0f, 0.0,0.0,1.0 , // top left
+         -1.0, 0.5, 0.0,    0.0,1.0,0.0,
+         -0.5,0.0,0.0,      1.0,0.0,0.0,
     };
     
     /*
@@ -160,8 +164,14 @@ int main()
     glBindVertexArray(VAO); //Select VAO
     glBindBuffer(GL_ARRAY_BUFFER, VBO);// Declare type and connect to VBO
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); //Store data
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    //Position data
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);  
+    
+    //Color data
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3*sizeof(float)));
+    glEnableVertexAttribArray(1); 
+    
     
     //Use Element Buffer Objects to object data
     unsigned int EBO;
@@ -179,6 +189,12 @@ int main()
         // rendering commands here
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+        
+        
+        float timeValue = glfwGetTime();
+        float blueValue = (sin(timeValue)/2.0)+0.5;
+        int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+        glUniform4f(vertexColorLocation,0.0f, 0.0f, blueValue,1.0f);
         
         //glUseProgram(shaderProgram);
         //glBindVertexArray(VAO);
