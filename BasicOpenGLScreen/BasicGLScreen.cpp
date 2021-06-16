@@ -1,17 +1,11 @@
 //#define GLFW_DLL //Only if dynamic lib
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
-#include <cmath>
-
-//Linker section, libs to include
-// -lopengl32 -lglfw3 -lgdi32 -luser32 -lkernel32
-//g++.exe "$(FILE_NAME)" -o $(NAME_PART) -lopengl32 -lglfw3 -lgdi32 -luser32 -lkernel32 //Also ling the glad.c
-
-//#define GLFW_DLL //Only if dynamic lib
-#include <glad/glad.h> 
-#include <GLFW/glfw3.h>
 #include <iostream>
 #include <windows.h>
+#include <fstream>
+#include <sstream>
+#include <cmath>
 
 //Linker section, libs to include
 // -lopengl32 -lglfw3 -lgdi32 -luser32 -lkernel32
@@ -27,12 +21,6 @@ const char *vertexShaderSource = "#version 330 core\n"
     "   vertexColor = vec4(aPos.x, 0.0,0.0,1.0)+vec4(aColor,0.0);"
     "}\n";
 
-const char *fragmentShaderSource = "#version 330 core \n"
-"in vec4 vertexColor;"
-"out vec4 FragColor;"
-"uniform vec4 ourColor;"
-"void main(){FragColor = vertexColor+ourColor;} ";
-
 void processInput(GLFWwindow *window)
 {
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
@@ -46,6 +34,34 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 int main()
 {
+    
+    //Read the shaders from file 
+    // 1. retrieve the vertex/fragment source code from filePath
+
+    std::string fragmentCode;
+    std::ifstream fShaderFile;
+    // ensure ifstream objects can throw exceptions:
+    fShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+    try 
+    {
+        // open files
+        fShaderFile.open("FragmentShader.txt");
+        std::stringstream fShaderStream;
+        // read file's buffer contents into streams
+        fShaderStream << fShaderFile.rdbuf();		
+        // close file handlers
+        fShaderFile.close();
+        
+        // convert stream into string
+        fragmentCode = fShaderStream.str();		
+    }
+    catch(std::ifstream::failure e)
+    {
+        std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+    }
+    const char* fragmentShaderSource = fragmentCode.c_str();
+    
+    
     /* Initialize the library */
     if (!glfwInit())
         return -1;
