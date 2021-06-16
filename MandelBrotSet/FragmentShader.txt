@@ -1,0 +1,44 @@
+#version 330 core
+#define MAX_CYCLES 30
+#define UPPER_BOUND 20.
+
+
+out vec4 FragColor;
+in vec2 FragCoord;
+uniform float time;
+
+//Addition for complex number can be down by normal addition
+vec2 Mult(vec2 a, vec2 b)
+{   //Second part image
+    return vec2(a.x*b.x-a.y*b.y, a.x*b.y+a.y*b.x);
+}
+
+float GetMandelBrot(vec2 p)
+{
+    vec2 z = vec2(0.0,0.0);
+    for (int i=0; i<MAX_CYCLES; i++)
+    {
+        z = Mult(z,z)+p;
+        if (length(z)>20.)
+        {
+            //Not in set
+            break;
+            
+        }
+    
+    }
+    return length(z);
+
+}
+
+void main()
+{
+    float div = GetMandelBrot(3.*FragCoord*sin(time));
+    
+    if (div <= UPPER_BOUND)
+    {
+        FragColor = vec4(0.0,1.0,0.0,1.0);
+    }
+    else{
+    FragColor = vec4(1.0,0.0,0.0,1.0);}
+}
