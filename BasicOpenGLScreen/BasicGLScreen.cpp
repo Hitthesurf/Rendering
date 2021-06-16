@@ -123,9 +123,7 @@ int main()
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader); 
     
-    //Now tell GL how to interpret vertex data in memory
-    glVertexAttribPointer(0,3,GL_FLOAT,false,3*sizeof(float),(void*)0);
-    glEnableVertexAttribArray(0); 
+
     
     //Now have Vertex Array Object to tell GL what the buffer has
      glViewport(0, 0, 800, 600);
@@ -164,6 +162,8 @@ int main()
     glBindVertexArray(VAO); //Select VAO
     glBindBuffer(GL_ARRAY_BUFFER, VBO);// Declare type and connect to VBO
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); //Store data
+    
+    //Now tell GL how to interpret vertex data in memory
     //Position data
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);  
