@@ -11,6 +11,21 @@
 // -lopengl32 -lglfw3 -lgdi32 -luser32 -lkernel32
 //g++.exe "$(FILE_NAME)" -o $(NAME_PART) -lopengl32 -lglfw3 -lgdi32 -luser32 -lkernel32
 
+float ZoomCount = 1.0;
+
+struct vec2 {
+	float x;
+	float y;
+};
+
+vec2 AddV(vec2 a, vec2 b) {
+	vec2 a_add_b;
+	a_add_b.x = a.x + b.x;
+	a_add_b.y = a.y + b.y;
+	return a_add_b;
+};
+	
+
 //Should read in from files
 const char *vertexShaderSource = "#version 330 core\n"
     "layout (location = 0) in vec2 aPos;\n"
@@ -25,6 +40,29 @@ void processInput(GLFWwindow *window)
 {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     {glfwSetWindowShouldClose(window, true);}
+	
+}
+
+vec2 processCamInput(GLFWwindow *window, float speed)
+{
+	vec2 Cam_Vel = {0.0,0.0};
+    if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    {
+		Cam_Vel.y += speed;
+	}
+	    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    {
+		Cam_Vel.y -= speed;
+	}
+	    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    {
+		Cam_Vel.x += speed;
+	}
+	    if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    {
+		Cam_Vel.x -= speed;
+	}
+	return Cam_Vel;
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -32,6 +70,11 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
     std::cout<<width<<"x"<<height<<"\r";
 } 
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	ZoomCount -= yoffset;	
+}
 
 int main()
 {
@@ -52,7 +95,8 @@ int main()
         return -1;
     }
     glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);  
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetScrollCallback(window, scroll_callback);
     
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -181,6 +225,8 @@ int main()
     
     
 // render loop
+	vec2 CamPosValue = {0.0,0.0};
+	unsigned int frames = 0;
     while(!glfwWindowShouldClose(window))
     {
         // input
@@ -189,19 +235,32 @@ int main()
         // rendering commands here
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-                
-        float timeValue = glfwGetTime();
-        int timeLocation = glGetUniformLocation(shaderProgram, "time");
-        glUniform1f(timeLocation,timeValue);
         
+		//Declare uniforms
+        //float timeValue = glfwGetTime();
+		float ZoomLevel = exp(0.4*ZoomCount);
+		CamPosValue = AddV(CamPosValue,processCamInput(window,0.01*ZoomLevel));
+		
+        //int timeLocation = glGetUniformLocation(shaderProgram, "time");
+		int CamPosLocation = glGetUniformLocation(shaderProgram, "CamPos");
+		int ZoomLocation = glGetUniformLocation(shaderProgram, "Zoom");
+		
+        //glUniform1f(timeLocation,timeValue);
+		glUniform2f(CamPosLocation, CamPosValue.x, CamPosValue.y);
+        glUniform1f(ZoomLocation, ZoomLevel); //So zoom is always positive
         
+		//If constant frame rate scroll will be consistent at any zoom level
+		
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 
         // check and call events and swap the buffers
         glfwPollEvents();
         glfwSwapBuffers(window);
+		frames++;
     }
-    glfwTerminate();
+   
+	std::cout<<"Frames: "<<frames<< " FPS: "<<(float)frames/glfwGetTime(); 
+	glfwTerminate();
     return 0;
 }

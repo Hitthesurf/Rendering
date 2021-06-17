@@ -1,11 +1,13 @@
 #version 330 core
 #define MAX_CYCLES 30
-#define UPPER_BOUND 20.
+#define UPPER_BOUND 1.
 
 
 out vec4 FragColor;
 in vec2 FragCoord;
 uniform float time;
+uniform float Zoom;
+uniform vec2 CamPos;
 
 //Addition for complex number can be down by normal addition
 vec2 Mult(vec2 a, vec2 b)
@@ -33,11 +35,13 @@ float GetMandelBrot(vec2 p)
 
 void main()
 {
-    float div = GetMandelBrot(3.*FragCoord*sin(time));
+    float div = GetMandelBrot(Zoom*FragCoord+CamPos);
     
     if (div <= UPPER_BOUND)
     {
-        FragColor = vec4(0.0,1.0,0.0,1.0);
+		
+        FragColor = vec4(0.0,div,0.0,1.0);
+		//to get val between 0 and 1, 
     }
     else{
     FragColor = vec4(1.0,0.0,0.0,1.0);}
