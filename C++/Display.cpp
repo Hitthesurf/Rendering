@@ -1,4 +1,9 @@
 #include "BasicRayMarch.hpp"
+
+#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+#endif
+
 const char bright_map[12] = {' ', ',', '-', '~', ':', ';', '=', '!', '*', '#', '$', '@'};
 
 int DisplaySetup(int rows)
