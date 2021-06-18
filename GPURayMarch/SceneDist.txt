@@ -1,0 +1,9 @@
+float sDist(vec3 p)
+{
+	vec3 SpherePos1 = vec3(3.0,0.0,0.5);
+	float DistSphere1 = Sphere(p-SpherePos1, 0.5);
+	float DistPlan1 = p.z;
+	
+	return min(DistPlan1,DistSphere1);
+
+}
