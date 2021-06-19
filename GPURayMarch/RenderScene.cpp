@@ -1,3 +1,4 @@
+#include "RenderScene.hpp"
 #define GLFW_DLL //Only if dynamic lib //Dont forget to change depending on setup
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
@@ -14,39 +15,9 @@
 float move_speed = 1.;
 //float fps = 55;
 
-struct vec2 {
-	float x;
-	float y;
-};
 
-struct vec3 {
-	float x;
-	float y;
-	float z;
-};
-	
 
-vec2 AddV(vec2 a, vec2 b) {
-	vec2 a_add_b;
-	a_add_b.x = a.x + b.x;
-	a_add_b.y = a.y + b.y;
-	return a_add_b;
-};
 
-vec3 AddV3(vec3 a, vec3 b) {
-	vec3 a_add_b;
-	a_add_b.x = a.x + b.x;
-	a_add_b.y = a.y + b.y;
-	a_add_b.z = a.z + b.z;
-	return a_add_b;
-};
-vec3 MultV3(float a, vec3 b){
-	vec3 c;
-	c.x = a*b.x;
-	c.y = a*b.y;
-	c.z = a*b.z;
-	return c;	
-}
 
 vec3 processCamInput(GLFWwindow *window, float speed)
 {
@@ -89,50 +60,12 @@ void processInput(GLFWwindow *window)
 }
 
 
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
     std::cout<<width<<"x"<<height<<"\r";
 } 
-
-//Read File Function
-std::string ReadFile(std::string filename)
-{
-    std::string ShaderCode;
-    std::ifstream ShaderFile;
-    // ensure ifstream objects can throw exceptions:
-    ShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
-    try 
-    {
-        // open files
-        ShaderFile.open(filename);
-        std::stringstream ShaderStream;
-        // read file's buffer contents into streams
-        ShaderStream << ShaderFile.rdbuf();		
-        // close file handlers
-        ShaderFile.close();
-        
-        // convert stream into string
-        ShaderCode = ShaderStream.str();		
-    }
-    catch(std::ifstream::failure e)
-    {
-        std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
-    }
-	return ShaderCode;
-
-}
-
-std::string ReadFileAndJoin(std::string files[], int Elements)
-{
-	std::string FileText = "";
-	for (int i=0; i<Elements; i++)
-	{
-		FileText += ReadFile(files[i]) + "\n";
-	}
-	return FileText;
-	
-}
 
 int main()
 {
@@ -150,6 +83,7 @@ int main()
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -157,11 +91,16 @@ int main()
         return -1;
     }  
     
-    
+
     
     //Read the shaders from file 
     // 1. retrieve the vertex/fragment source code from filePath
-	std::string my_shader[] = {"Setup.txt", "Materials.txt", "PrimitiveShapes.txt", "SceneDist.txt", "ShaderFragment.txt"};
+	std::string my_shader[] = {"Shaders/Setup.txt",
+							   "Shaders/Materials.txt",
+							   "Shaders/PrimitiveShapes.txt",
+							   "Shaders/SceneDist.txt",
+							   "Shaders/ShaderFragment.txt"};
+							   
     std::string fragmentShaderSourceString = ReadFileAndJoin(my_shader, 5); //Cannot directly convert to c char
 	//std::cout << fragmentShaderSourceString;
     const char* fragmentShaderSource = fragmentShaderSourceString.c_str();
@@ -271,6 +210,11 @@ int main()
         // input
         processInput(window);
 		processCamInput(window, move_speed);
+		
+		//Mouse Input
+		double xpos, ypos;
+		glfwGetCursorPos(window, &xpos, &ypos);
+		//std::cout << xpos << "\n";
 
         // rendering commands here
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -278,8 +222,7 @@ int main()
         
 		//Declare uniforms
         //float timeValue = glfwGetTime();
-		CamPosValue = AddV3(CamPosValue, MultV3(timeDiff, processCamInput(window,move_speed)));
-		//std::cout << CamPosValue.x << " " << CamPosValue.y << " " << CamPosValue.z << "\r";
+		CamPosValue = Add(CamPosValue, Mult(timeDiff, processCamInput(window,move_speed)));
         //int timeLocation = glGetUniformLocation(shaderProgram, "time");
 		int CamPosLocation = glGetUniformLocation(shaderProgram, "CamPos");
 		
