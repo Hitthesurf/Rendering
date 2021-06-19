@@ -15,6 +15,9 @@
 float move_speed = 2.;
 const float mouse_sen = 1.0;
 float ZoomCount = 0.0;
+float time_of_light_toggle = 0.0;
+const int start_Res_x = 800;
+const int start_Res_y = 600;
 //float fps = 55;
 
 
@@ -59,7 +62,18 @@ vec3 processCamInput(GLFWwindow *window, float speed, vec3 CamDir)
 	
 	return Cam_Vel;
 }
-	
+int processPlayerLight(GLFWwindow *window, int LightStatus)
+{
+	if(glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+    {	
+		if (glfwGetTime()-time_of_light_toggle > 0.3)
+		{   //Time has been long enough to warrant changing status, otherwise light flicker when L button held
+			LightStatus = (LightStatus+1)%2;
+			time_of_light_toggle = glfwGetTime();
+		}
+	}
+	return LightStatus;
+}
 
 //Should read in from files
 const char *vertexShaderSource = "#version 330 core\n"
@@ -68,7 +82,7 @@ const char *vertexShaderSource = "#version 330 core\n"
     "void main()\n"
     "{\n"
     "   gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);\n"
-    "   FragCoord = vec2(aPos.x, aPos.y);"
+    "   FragCoord = aPos;"
     "}\n";
 
 void processInput(GLFWwindow *window)
@@ -97,7 +111,7 @@ int main()
     if (!glfwInit())
 	{return -1;}
     
-    GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(start_Res_x, start_Res_y, "LearnOpenGL", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -185,7 +199,7 @@ int main()
 
     
     //Now have Vertex Array Object to tell GL what the buffer has
-     glViewport(0, 0, 800, 600);
+     glViewport(0, 0, start_Res_x, start_Res_y);
     
     //Set up vertex data and buffers
     
@@ -227,6 +241,7 @@ int main()
 	float time = glfwGetTime();
 	float timeEnd = time +0.05;
 	float timeDiff = timeEnd - time;
+	int PlayerLightStatus = 0;
     while(!glfwWindowShouldClose(window))
     {
 
@@ -245,29 +260,32 @@ int main()
 		// input
         processInput(window);
 		processCamInput(window, move_speed, CamDirValue);
+		PlayerLightStatus = processPlayerLight(window, PlayerLightStatus);
 
         // rendering commands here
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         
 		//Declare uniforms
-        //float timeValue = glfwGetTime();
+        float timeValue = glfwGetTime();
 		CamPosValue = Add(CamPosValue, Mult(timeDiff, processCamInput(window,move_speed,CamDirValue)));
 		
 		
-        //int timeLocation = glGetUniformLocation(shaderProgram, "time");
+        int timeLocation = glGetUniformLocation(shaderProgram, "t");
 		int CamPosLocation = glGetUniformLocation(shaderProgram, "CamPos");
 		int CamDirLocation = glGetUniformLocation(shaderProgram, "CamDir");
 		int ZoomLocation = glGetUniformLocation(shaderProgram, "Zoom");
+		int playerLightLocation = glGetUniformLocation(shaderProgram, "player_light");
 		
 		
-        //glUniform1f(timeLocation,timeValue);
+        glUniform1f(timeLocation,timeValue);
         glUniform3f(CamPosLocation, CamPosValue.x, CamPosValue.y, CamPosValue.z);
 		glUniform3f(CamDirLocation, CamDirValue.x, CamDirValue.y, CamDirValue.z);
 		glUniform1f(ZoomLocation, exp(-ZoomCount));
+		glUniform1i(playerLightLocation, PlayerLightStatus);
 		
 		//If constant frame rate scroll will be consistent at any zoom level
-		
+		glUseProgram(shaderProgram); // To use this shader program
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 

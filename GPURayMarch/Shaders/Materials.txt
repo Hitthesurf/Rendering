@@ -7,8 +7,19 @@ vec3 GetColor(int MatID)
 	}
 	if (MatID == 2) //Blue
 	{
-		return vec3(0.0,1.0,0.0);
+		return vec3(0.0,0.0,1.0);
 	}
 	
+	if (MatID == 3) //Dark Blue
+	{
+		return vec3(0.0,0.0,0.5);
+	}
+	if (MatID == 4) //Hot Pink
+	{
+	    return vec3(255.,105.,180.)/255.;
+	}
+	
+
 	return vec3(1.0,1.0,1.0);
+	
 }

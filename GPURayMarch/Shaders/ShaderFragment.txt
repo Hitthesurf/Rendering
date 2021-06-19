@@ -71,8 +71,17 @@ void main()
 	vec3 rd = normalize(Zoom*CamDir + V*FragCoord.y + H*FragCoord.x);
 	DistMat c = RayMarch(ro,rd);
 	vec3 rp = ro + c.s*rd;
-	vec3 Color = vec3(GetLight(rp,LightPos));
-	Color *= GetColor(c.MatID);
+	float LightLevel = GetLight(rp,LightPos);
+	float LightLevelCam = 0.0;
+	if (player_light==1){
+		//Make light into cone shape
+		if (FragCoord.x*FragCoord.x + FragCoord.y*FragCoord.y < 0.35)
+		{
+		LightLevelCam = GetLight(rp, CamPos);
+		}
+	}
+	
+	vec3 Color = GetColor(c.MatID)*clamp(LightLevelCam*0.4+LightLevel,0.0,1.0);
 	
 	FragColor = vec4(Color,1.0);
 }
