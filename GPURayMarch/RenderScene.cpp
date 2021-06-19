@@ -12,32 +12,51 @@
 // -lopengl32 -lglfw3 -lgdi32 -luser32 -lkernel32
 //g++.exe "$(FILE_NAME)" -o $(NAME_PART) -lopengl32 -lglfw3 -lgdi32 -luser32 -lkernel32
 
-float move_speed = 1.;
+float move_speed = 2.;
+const float mouse_sen = 1.0;
+float ZoomCount = 0.0;
 //float fps = 55;
 
 
-
-
-
-vec3 processCamInput(GLFWwindow *window, float speed)
+vec3 GetH(vec3 d)
 {
+    d = Normalize(d);
+    vec3 H = {d.y, -d.x, 0};
+    return Normalize(H);
+}
+
+
+vec3 processCamInput(GLFWwindow *window, float speed, vec3 CamDir)
+{
+	vec3 H = GetH(CamDir);
+	vec3 V = Cross(H,CamDir);
+	
 	vec3 Cam_Vel = {0.0,0.0,0.0};
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     {
-		Cam_Vel.y += speed;
+		Cam_Vel = Add(Cam_Vel,Mult(speed, CamDir));
 	}
-	    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
     {
-		Cam_Vel.y -= speed;
+		Cam_Vel = Add(Cam_Vel,Mult(-speed, CamDir));
 	}
-	    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
     {
-		Cam_Vel.x += speed;
+		Cam_Vel = Add(Cam_Vel,Mult(speed,H));
 	}
-	    if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
     {
-		Cam_Vel.x -= speed;
+		Cam_Vel = Add(Cam_Vel,Mult(-speed,H));
 	}
+	if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+	{
+		Cam_Vel = Add(Cam_Vel,Mult(speed,V));
+	}
+	if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+	{
+		Cam_Vel = Add(Cam_Vel,Mult(-speed,V));
+	}
+	
 	return Cam_Vel;
 }
 	
@@ -59,6 +78,10 @@ void processInput(GLFWwindow *window)
 	
 }
 
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	ZoomCount -= (float)yoffset;	
+}
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -84,6 +107,7 @@ int main()
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetScrollCallback(window, scroll_callback);
     
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -197,6 +221,8 @@ int main()
     
 // render loop
 	vec3 CamPosValue = {0.0,0.0,1.0};
+	vec3 CamDirValue = {1.0,0.0,0.0};
+	CamDirValue = Normalize(CamDirValue);
 	unsigned int frames = 0;
 	float time = glfwGetTime();
 	float timeEnd = time +0.05;
@@ -207,14 +233,18 @@ int main()
 		
 		time = glfwGetTime();
 		
-        // input
-        processInput(window);
-		processCamInput(window, move_speed);
+
 		
 		//Mouse Input
 		double xpos, ypos;
 		glfwGetCursorPos(window, &xpos, &ypos);
-		//std::cout << xpos << "\n";
+		CamDirValue = vec3 {1.0,0.0,0.0};
+		CamDirValue = Mult(R_y(ypos*mouse_sen/200.),CamDirValue);
+		CamDirValue = Mult(R_z(-xpos*mouse_sen/200.),CamDirValue);
+		
+		// input
+        processInput(window);
+		processCamInput(window, move_speed, CamDirValue);
 
         // rendering commands here
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -222,12 +252,19 @@ int main()
         
 		//Declare uniforms
         //float timeValue = glfwGetTime();
-		CamPosValue = Add(CamPosValue, Mult(timeDiff, processCamInput(window,move_speed)));
+		CamPosValue = Add(CamPosValue, Mult(timeDiff, processCamInput(window,move_speed,CamDirValue)));
+		
+		
         //int timeLocation = glGetUniformLocation(shaderProgram, "time");
 		int CamPosLocation = glGetUniformLocation(shaderProgram, "CamPos");
+		int CamDirLocation = glGetUniformLocation(shaderProgram, "CamDir");
+		int ZoomLocation = glGetUniformLocation(shaderProgram, "Zoom");
+		
 		
         //glUniform1f(timeLocation,timeValue);
         glUniform3f(CamPosLocation, CamPosValue.x, CamPosValue.y, CamPosValue.z);
+		glUniform3f(CamDirLocation, CamDirValue.x, CamDirValue.y, CamDirValue.z);
+		glUniform1f(ZoomLocation, exp(-ZoomCount));
 		
 		//If constant frame rate scroll will be consistent at any zoom level
 		

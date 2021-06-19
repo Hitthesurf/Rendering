@@ -1,0 +1,14 @@
+
+vec3 GetColor(int MatID)
+{
+	if (MatID == 1) //Red
+	{
+		return vec3(1.0,0.0,0.0);
+	}
+	if (MatID == 2) //Blue
+	{
+		return vec3(0.0,1.0,0.0);
+	}
+	
+	return vec3(1.0,1.0,1.0);
+}

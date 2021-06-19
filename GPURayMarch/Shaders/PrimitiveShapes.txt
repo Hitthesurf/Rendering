@@ -2,3 +2,9 @@ float Sphere(vec3 p, float r)
 {
 	return length(p)-r;
 }
+
+float Torus(vec3 p, float R, float r)
+{
+	float R_d = length(p.xy)-R;
+	return length(vec2(R_d,p.z))-r;
+}

@@ -1,9 +1,18 @@
-float sDist(vec3 p)
+DistMat sDist(vec3 p)
 {
+	DistMat c;
 	vec3 SpherePos1 = vec3(3.0,0.0,0.5);
+	vec3 TorusPos1 = vec3(3.0, 0.0, 1.);
+	
 	float DistSphere1 = Sphere(p-SpherePos1, 0.5);
 	float DistPlan1 = p.z;
+	float DistTorus1 = Torus(p-TorusPos1, 2.0,0.5);
 	
-	return min(DistPlan1,DistSphere1);
+	c.s = min(DistPlan1,min(DistSphere1,DistTorus1));
+	c.MatID = 2;
+	if (c.s==DistSphere1)
+		{c.MatID = 1;}
+	
+	return c;
 
 }

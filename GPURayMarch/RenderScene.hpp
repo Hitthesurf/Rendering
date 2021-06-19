@@ -46,3 +46,8 @@ float Dot(vec3 a, vec3 b);
 vec3 Cross(vec3 a, vec3 b);
 vec3 Normalize(vec3 a);
 float Clamp(float num, float start, float end);
+
+//Rotation Matrix
+Mat3 R_x(float a); //Around x axis
+Mat3 R_y(float a); //Around y axis
+Mat3 R_z(float a); //Around z axis

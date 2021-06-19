@@ -121,3 +121,29 @@ vec3 Mult(Mat3 M, vec3 V)
     c.z = M.x_20*V.x + M.x_21*V.y +M.x_22*V.z;
     return c;    
 }
+
+//Rotation matrix
+Mat3 R_x(float a) //Around x_axis
+{
+	Mat3 c = {1.0,0.0,0.0,
+			  0.0,(float)cos(a),-(float)sin(a),
+			  0.0,(float)sin(a),(float)cos(a)};
+	return c;	
+}
+
+Mat3 R_y(float a) //Around x_axis
+{
+	Mat3 c = {(float)cos(a),0.0,(float)sin(a),
+						0.0,1.0,0.0,
+			  -(float)sin(a),0.0,(float)cos(a)};
+	return c;	
+}
+
+Mat3 R_z(float a) //Around x_axis
+{
+	Mat3 c = {(float)cos(a),-(float)sin(a),0.0,
+			  (float)sin(a),(float)cos(a),0.0,
+			  0.0,0.0,1.0};
+	return c;	
+}
+

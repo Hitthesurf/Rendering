@@ -9,7 +9,15 @@ in vec2 FragCoord;
 out vec4 FragColor;
 
 uniform vec3 CamPos;
+uniform vec3 CamDir;
+uniform float Zoom;
 
 const vec3 x_hat = vec3(1.0,0.0,0.0);
 const vec3 y_hat = vec3(0.0,1.0,0.0);
 const vec3 z_hat = vec3(0.0,0.0,1.0);
+
+
+struct DistMat {
+	float s; //Distance
+	int MatID; 
+};
