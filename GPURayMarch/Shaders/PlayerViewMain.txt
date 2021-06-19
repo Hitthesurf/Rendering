@@ -1,0 +1,31 @@
+void main()
+{
+	//vec3 CamDir = vec3(1.0,0.0,0.0);
+	//vec3 CamPos = vec3(0.0,0.0,1.0);
+	//float Zoom = 1.0;
+	vec3 SceneLightPos = vec3(4.0,2.0,8.0);
+	
+	vec3 H = GetH(CamDir);
+	vec3 V = cross(H,CamDir);
+	
+	
+	
+	vec3 ro = CamPos;
+	vec3 rd = normalize(Zoom*CamDir + V*FragCoord.y + H*FragCoord.x);
+	DistMat c = RayMarch(ro,rd);
+	vec3 rp = ro + c.s*rd;
+	float LightLevel = GetLight(rp,SceneLightPos);
+	float LightLevelCam = 0.0;
+	
+	if (player_light==1){
+		//Make light into cone shape
+		if (FragCoord.x*FragCoord.x + FragCoord.y*FragCoord.y < 0.35)
+		{
+		LightLevelCam = GetLight(rp, CamPos);
+		}
+	}
+	
+	vec3 Color = GetColor(c.MatID)*clamp(LightLevelCam*0.4+LightLevel,0.0,1.0);
+	
+	FragColor = vec4(Color,1.0);
+}

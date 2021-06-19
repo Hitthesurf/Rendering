@@ -84,6 +84,16 @@ const char *vertexShaderSource = "#version 330 core\n"
     "   gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);\n"
     "   FragCoord = aPos;"
     "}\n";
+	
+const char *vertexShaderMiniMapSource = "#version 330 core\n"
+    "layout (location = 0) in vec2 aPos;\n"
+	"layout (location = 1) in vec2 FragPos;"
+    "out vec2 FragCoord;"
+    "void main()\n"
+    "{\n"
+    "   gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);\n"
+    "   FragCoord = FragPos;"
+    "}\n";
 
 void processInput(GLFWwindow *window)
 {
@@ -137,13 +147,69 @@ int main()
 							   "Shaders/Materials.txt",
 							   "Shaders/PrimitiveShapes.txt",
 							   "Shaders/SceneDist.txt",
-							   "Shaders/ShaderFragment.txt"};
+							   "Shaders/RayMarch.txt",
+							   "Shaders/PlayerViewMain.txt"};
 							   
-    std::string fragmentShaderSourceString = ReadFileAndJoin(my_shader, 5); //Cannot directly convert to c char
-	//std::cout << fragmentShaderSourceString;
+    std::string fragmentShaderSourceString = ReadFileAndJoin(my_shader, 6); //Cannot directly convert to c char
     const char* fragmentShaderSource = fragmentShaderSourceString.c_str();
     
+	std::string my_mini_shader[] = {"Shaders/Setup.txt",
+							   "Shaders/Materials.txt",
+							   "Shaders/PrimitiveShapes.txt",
+							   "Shaders/SceneDist.txt",
+							   "Shaders/RayMarch.txt",
+							   "Shaders/PlayerViewMain.txt"};
+	std::string MiniMapShaderSourceString = ReadFileAndJoin(my_mini_shader,6);
+    const char* MiniMapShaderSource = MiniMapShaderSourceString.c_str();
+   	int  success;
+    char infoLog[512];
    
+	unsigned int vertexShaderMiniMap;
+	vertexShaderMiniMap = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShaderMiniMap, 1, &vertexShaderMiniMapSource, NULL);
+	glCompileShader(vertexShaderMiniMap);
+	
+	glGetShaderiv(vertexShaderMiniMap, GL_COMPILE_STATUS, &success);
+	if(!success)
+    {
+        glGetShaderInfoLog(vertexShaderMiniMap, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::VERTEXSHADERMINIMAP::COMPILATION_FAILED\n" << infoLog << " 1 "<< std::endl;
+    }
+	
+	unsigned int MiniMapShader;
+	MiniMapShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(MiniMapShader, 1, &MiniMapShaderSource, NULL);
+	glCompileShader(MiniMapShader);
+	
+	glGetShaderiv(MiniMapShader, GL_COMPILE_STATUS, &success);
+    if(!success)
+    {
+        glGetShaderInfoLog(MiniMapShader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::MINIMAPFRAGMENT::COMPILATION_FAILED\n" << infoLog << " 1 " << std::endl;
+    }
+	
+	unsigned int shaderMiniMap;
+    shaderMiniMap = glCreateProgram();
+    
+    glAttachShader(shaderMiniMap, vertexShaderMiniMap);
+    glAttachShader(shaderMiniMap, MiniMapShader);
+    glLinkProgram(shaderMiniMap);
+	
+
+    
+    //Check for errors in the linker
+
+    glGetProgramiv(shaderMiniMap, GL_LINK_STATUS, &success);
+    if(!success) {
+        glGetProgramInfoLog(shaderMiniMap, 512, NULL, infoLog);
+        std::cout << "ERROR::PROGRAM::MINIMAP::LINKER::COMPILATION_FAILED\n" << infoLog << " 1 " << std::endl;
+    }
+
+	glDeleteShader(MiniMapShader);
+    glDeleteShader(vertexShaderMiniMap); 
+	
+	
+	
     //We will now define vertex shader
     unsigned int vertexShader;
     vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -153,8 +219,6 @@ int main()
     glCompileShader(vertexShader);
     
     //Check if shader compiled
-    int  success;
-    char infoLog[512];
     glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
     if(!success)
     {
@@ -177,22 +241,22 @@ int main()
     }
     
     //Now we must turn these shaders into a graphics pipeline
-    unsigned int shaderProgram;
-    shaderProgram = glCreateProgram();
+    unsigned int shaderPlayerView;
+    shaderPlayerView = glCreateProgram();
     
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
+    glAttachShader(shaderPlayerView, vertexShader);
+    glAttachShader(shaderPlayerView, fragmentShader);
+    glLinkProgram(shaderPlayerView);
     
     //Check for errors in the linker
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    glGetProgramiv(shaderPlayerView, GL_LINK_STATUS, &success);
     if(!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        glGetProgramInfoLog(shaderPlayerView, 512, NULL, infoLog);
         std::cout << "ERROR::PROGRAM::LINKER::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
     
     //Use the pipeline we created
-    glUseProgram(shaderProgram);//Can also be called in render loop
+    glUseProgram(shaderPlayerView);//Can also be called in render loop
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader); 
     
@@ -202,8 +266,33 @@ int main()
      glViewport(0, 0, start_Res_x, start_Res_y);
     
     //Set up vertex data and buffers
+	
+float verticesMiniMap[] = {
+		//Position,  //Frag_Coord Position
+        1.0f, 0.5f,		1.0f, -1.0f, // bottom right
+        1.0f, 1.0f, 	1.0f,  1.0f, // top right         
+        0.5f, 0.5f,	   -1.0f, -1.0f, // bottom left
+		0.5f, 1.0f,	   -1.0f,  1.0f, // top left
+};	
+
+	unsigned int VBO_MiniMap;
+	glGenBuffers(1, &VBO_MiniMap);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_MiniMap);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesMiniMap), verticesMiniMap, GL_STATIC_DRAW);
+	
+	unsigned int VAO_MiniMap;
+	glGenVertexArrays(1, &VAO_MiniMap);
+	glBindVertexArray(VAO_MiniMap);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO_MiniMap);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesMiniMap), verticesMiniMap, GL_STATIC_DRAW);
+	
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0); 
+	
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1); 
     
-    float vertices[] = {
+float vertices[] = {
         1.0f, -1.0f, // bottom right
          1.0f,  1.0f, // top right         
         -1.0f, -1.0f, // bottom left
@@ -259,23 +348,24 @@ int main()
 		
 		// input
         processInput(window);
-		processCamInput(window, move_speed, CamDirValue);
 		PlayerLightStatus = processPlayerLight(window, PlayerLightStatus);
+		CamPosValue = Add(CamPosValue, Mult(timeDiff, processCamInput(window,move_speed,CamDirValue)));
+		float timeValue = glfwGetTime();
 
         // rendering commands here
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         
+		
+		//ShaderProgramForPlayer
+		glUseProgram(shaderPlayerView); // To use this shader program
+		glBindVertexArray(VAO);
 		//Declare uniforms
-        float timeValue = glfwGetTime();
-		CamPosValue = Add(CamPosValue, Mult(timeDiff, processCamInput(window,move_speed,CamDirValue)));
-		
-		
-        int timeLocation = glGetUniformLocation(shaderProgram, "t");
-		int CamPosLocation = glGetUniformLocation(shaderProgram, "CamPos");
-		int CamDirLocation = glGetUniformLocation(shaderProgram, "CamDir");
-		int ZoomLocation = glGetUniformLocation(shaderProgram, "Zoom");
-		int playerLightLocation = glGetUniformLocation(shaderProgram, "player_light");
+        int timeLocation = glGetUniformLocation(shaderPlayerView, "t");
+		int CamPosLocation = glGetUniformLocation(shaderPlayerView, "CamPos");
+		int CamDirLocation = glGetUniformLocation(shaderPlayerView, "CamDir");
+		int ZoomLocation = glGetUniformLocation(shaderPlayerView, "Zoom");
+		int playerLightLocation = glGetUniformLocation(shaderPlayerView, "player_light");
 		
 		
         glUniform1f(timeLocation,timeValue);
@@ -284,8 +374,29 @@ int main()
 		glUniform1f(ZoomLocation, exp(-ZoomCount));
 		glUniform1i(playerLightLocation, PlayerLightStatus);
 		
-		//If constant frame rate scroll will be consistent at any zoom level
-		glUseProgram(shaderProgram); // To use this shader program
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		
+		
+		//Shader Program For MiniMap
+		glBindVertexArray(VAO_MiniMap);
+		glUseProgram(shaderMiniMap);
+
+		//Shader Program for MiniMap	
+        timeLocation = glGetUniformLocation(shaderPlayerView, "t");
+		CamPosLocation = glGetUniformLocation(shaderPlayerView, "CamPos");
+		CamDirLocation = glGetUniformLocation(shaderPlayerView, "CamDir");
+		ZoomLocation = glGetUniformLocation(shaderPlayerView, "Zoom");
+		playerLightLocation = glGetUniformLocation(shaderPlayerView, "player_light");
+		
+		
+        glUniform1f(timeLocation,timeValue);
+        glUniform3f(CamPosLocation, CamPosValue.x, CamPosValue.y, CamPosValue.z);
+		glUniform3f(CamDirLocation, CamDirValue.x, CamDirValue.y, CamDirValue.z);
+		glUniform1f(ZoomLocation, exp(-ZoomCount));
+		glUniform1i(playerLightLocation, PlayerLightStatus);
+
+
+		
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 
