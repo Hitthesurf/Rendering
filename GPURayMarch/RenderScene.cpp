@@ -121,7 +121,7 @@ int main()
     if (!glfwInit())
 	{return -1;}
     
-    GLFWwindow* window = glfwCreateWindow(start_Res_x, start_Res_y, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(start_Res_x, start_Res_y, "MyOpenGLScene", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -148,7 +148,7 @@ int main()
 							   "Shaders/PrimitiveShapes.txt",
 							   "Shaders/SceneDist.txt",
 							   "Shaders/RayMarch.txt",
-							   "Shaders/PlayerViewMain.txt"};
+							   "Shaders/FragmentMain.txt"};
 							   
     std::string fragmentShaderSourceString = ReadFileAndJoin(my_shader, 6); //Cannot directly convert to c char
     const char* fragmentShaderSource = fragmentShaderSourceString.c_str();
@@ -158,7 +158,7 @@ int main()
 							   "Shaders/PrimitiveShapes.txt",
 							   "Shaders/SceneDist.txt",
 							   "Shaders/RayMarch.txt",
-							   "Shaders/PlayerViewMain.txt"};
+							   "Shaders/FragmentMain.txt"};
 	std::string MiniMapShaderSourceString = ReadFileAndJoin(my_mini_shader,6);
     const char* MiniMapShaderSource = MiniMapShaderSourceString.c_str();
    	int  success;
