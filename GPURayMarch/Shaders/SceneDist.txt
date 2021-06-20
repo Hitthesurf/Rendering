@@ -2,8 +2,13 @@ DistMat sDist(vec3 p)
 {
 	DistMat c;
 	vec3 SpherePos1 = vec3(3.0,0.0,0.5);
-	vec3 TorusPos1 = vec3(3.0, 0.0, 2.);
+	vec3 TorusPos1 = vec3(4.0, 0.0, 9.0);
 	vec3 CubePos1 = vec3(0.,0.,0.);
+    
+    vec3 CubePos2 = vec3(7.0,0.0,4.0+3.0*sin_2t);
+    vec3 TorusPos2 = vec3(7.0,0.0,4.0);
+    
+
 	
 	//Transformations
 	TorusPos1.xy = R*TorusPos1.xy;
@@ -12,15 +17,34 @@ DistMat sDist(vec3 p)
 	float DistPlan1 = p.z;
 	float DistTorus1 = Torus(p-TorusPos1, 2.0,0.5);
 	float DistCube1 = Box(p-CubePos1, vec3(0.5));
-	
+    
+    
+    //Move p to the Pos2 place
+    p -= TorusPos2;
+    p.xz = R*p.xz;
+    p.xy = R*p.xy;
+    p.xy = R*p.xy;
+    p += TorusPos2;
+    
+    
+	float DistTorus2 = Torus(p-TorusPos2, 3.0, 0.5);
+    float DistCube2 = Box(p-CubePos2, vec3(1.0));
+    
+    
 	c.s = min(min(DistPlan1,DistCube1),min(DistSphere1,DistTorus1));
+    c.s = min(c.s,min(DistTorus2,DistCube2));
 	c.MatID = 2;
 	if (c.s==DistSphere1)
 		{c.MatID = 1;}
 	if (c.s==DistPlan1)
 		{c.MatID = 3;}
 	if (c.s == DistCube1)
-		{c.MatID=4 ;}
+		{c.MatID=4;}
+    if (c.s == DistCube2)
+        {c.MatID=5;}
+    if (c.s == DistTorus2)
+        {c.MatID=6;}
+        
 		
 	
 	return c;

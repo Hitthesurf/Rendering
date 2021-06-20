@@ -10,6 +10,8 @@ out vec4 FragColor;
 
 uniform vec3 CamPos;
 uniform vec3 CamDir;
+uniform vec3 PlayerPos;
+uniform vec3 PlayerDir;
 uniform float Zoom;
 uniform float t; //time
 uniform int player_light;
@@ -20,6 +22,8 @@ const vec3 z_hat = vec3(0.0,0.0,1.0);
 
 float cos_t = cos(t);
 float sin_t = sin(t);
+
+float sin_2t = 2*cos_t*sin_t;
 
 mat2 R = mat2(cos_t,sin_t,-sin_t,cos_t);
 

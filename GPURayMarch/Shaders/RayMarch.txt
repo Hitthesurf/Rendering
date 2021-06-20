@@ -46,6 +46,26 @@ float GetLight(vec3 p, vec3 LightPos)
 	return light_level;
 }
 
+float Get_Cone_Light(vec3 p, vec3 LightPos, vec3 LightDir, float cos_angle)
+{
+    vec3 normal = GetNormal(p);
+    vec3 p_to_l = LightPos-p;
+    vec3 norm_p_to_l = normalize(p_to_l);
+    
+    float light_level = clamp(dot(normal, norm_p_to_l),0.0,1.0);
+    if (RayMarch(p+2*MIN_STEP*normal,norm_p_to_l).s<length(p_to_l))
+	{
+		//Light blocked
+		light_level *= 0.1;	
+	}
+    if (dot(-norm_p_to_l,LightDir)<cos_angle)
+    {
+        //Not in light ray path
+        light_level = 0.0;
+    }
+    return light_level;
+}
+
 vec3 GetH(vec3 d)
 {
     d = normalize(d);

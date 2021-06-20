@@ -16,8 +16,8 @@ float move_speed = 2.;
 const float mouse_sen = 1.0;
 float ZoomCount = 0.0;
 float time_of_light_toggle = 0.0;
-const int start_Res_x = 800;
-const int start_Res_y = 600;
+const int start_Res_x = 750;
+const int start_Res_y = 750;
 //float fps = 55;
 
 
@@ -66,10 +66,10 @@ int processPlayerLight(GLFWwindow *window, int LightStatus)
 {
 	if(glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
     {	
-		if (glfwGetTime()-time_of_light_toggle > 0.3)
+        if (glfwGetTime()-time_of_light_toggle > 0.3)
 		{   //Time has been long enough to warrant changing status, otherwise light flicker when L button held
-			LightStatus = (LightStatus+1)%2;
-			time_of_light_toggle = glfwGetTime();
+            LightStatus = (LightStatus+1)%2;
+            time_of_light_toggle = glfwGetTime();
 		}
 	}
 	return LightStatus;
@@ -269,10 +269,10 @@ int main()
 	
 float verticesMiniMap[] = {
 		//Position,  //Frag_Coord Position
-        1.0f, 0.5f,		1.0f, -1.0f, // bottom right
-        1.0f, 1.0f, 	1.0f,  1.0f, // top right         
-        0.5f, 0.5f,	   -1.0f, -1.0f, // bottom left
-		0.5f, 1.0f,	   -1.0f,  1.0f, // top left
+        0.9f, 0.4f,		1.0f, -1.0f, // bottom right
+        0.9f, 0.9f, 	1.0f,  1.0f, // top right         
+        0.4f, 0.4f,	   -1.0f, -1.0f, // bottom left
+		0.4f, 0.9f,	   -1.0f,  1.0f, // top left
 };	
 
 	unsigned int VBO_MiniMap;
@@ -325,6 +325,8 @@ float vertices[] = {
 // render loop
 	vec3 CamPosValue = {0.0,0.0,1.0};
 	vec3 CamDirValue = {1.0,0.0,0.0};
+    vec3 PlayerPosValue = CamPosValue;
+    vec3 PlayerDirValue = CamDirValue;
 	CamDirValue = Normalize(CamDirValue);
 	unsigned int frames = 0;
 	float time = glfwGetTime();
@@ -350,6 +352,8 @@ float vertices[] = {
         processInput(window);
 		PlayerLightStatus = processPlayerLight(window, PlayerLightStatus);
 		CamPosValue = Add(CamPosValue, Mult(timeDiff, processCamInput(window,move_speed,CamDirValue)));
+        PlayerPosValue = CamPosValue;
+        PlayerDirValue = CamDirValue;
 		float timeValue = glfwGetTime();
 
         // rendering commands here
@@ -366,6 +370,8 @@ float vertices[] = {
 		int CamDirLocation = glGetUniformLocation(shaderPlayerView, "CamDir");
 		int ZoomLocation = glGetUniformLocation(shaderPlayerView, "Zoom");
 		int playerLightLocation = glGetUniformLocation(shaderPlayerView, "player_light");
+        int PlayerPosLocation = glGetUniformLocation(shaderPlayerView, "PlayerPos");
+        int PlayerDirLocation = glGetUniformLocation(shaderPlayerView, "PlayerDir");
 		
 		
         glUniform1f(timeLocation,timeValue);
@@ -373,6 +379,8 @@ float vertices[] = {
 		glUniform3f(CamDirLocation, CamDirValue.x, CamDirValue.y, CamDirValue.z);
 		glUniform1f(ZoomLocation, exp(-ZoomCount));
 		glUniform1i(playerLightLocation, PlayerLightStatus);
+        glUniform3f(PlayerPosLocation, PlayerPosValue.x, PlayerPosValue.y, PlayerPosValue.z);
+        glUniform3f(PlayerDirLocation, PlayerDirValue.x, PlayerDirValue.y, PlayerDirValue.z);
 		
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		
@@ -383,19 +391,20 @@ float vertices[] = {
 
 		//Shader Program for MiniMap	
         timeLocation = glGetUniformLocation(shaderPlayerView, "t");
-		CamPosLocation = glGetUniformLocation(shaderPlayerView, "CamPos");
-		CamDirLocation = glGetUniformLocation(shaderPlayerView, "CamDir");
-		ZoomLocation = glGetUniformLocation(shaderPlayerView, "Zoom");
-		playerLightLocation = glGetUniformLocation(shaderPlayerView, "player_light");
-		
-		
+        CamPosLocation = glGetUniformLocation(shaderPlayerView, "CamPos");
+        CamDirLocation = glGetUniformLocation(shaderPlayerView, "CamDir");
+        ZoomLocation = glGetUniformLocation(shaderPlayerView, "Zoom");
+        playerLightLocation = glGetUniformLocation(shaderPlayerView, "player_light");
+		PlayerPosLocation = glGetUniformLocation(shaderPlayerView, "PlayerPos");
+		PlayerDirLocation = glGetUniformLocation(shaderPlayerView, "PlayerDir");
+        
         glUniform1f(timeLocation,timeValue);
-        glUniform3f(CamPosLocation, CamPosValue.x, CamPosValue.y, CamPosValue.z);
-		glUniform3f(CamDirLocation, CamDirValue.x, CamDirValue.y, CamDirValue.z);
+        glUniform3f(CamPosLocation, CamPosValue.x, CamPosValue.y, 20.); //Set up camera for mini map
+		glUniform3f(CamDirLocation, 0.0, 0.01, -1.0);
 		glUniform1f(ZoomLocation, exp(-ZoomCount));
 		glUniform1i(playerLightLocation, PlayerLightStatus);
-
-
+        glUniform3f(PlayerPosLocation, PlayerPosValue.x, PlayerPosValue.y, PlayerPosValue.z);
+        glUniform3f(PlayerDirLocation, PlayerDirValue.x, PlayerDirValue.y, PlayerDirValue.z);
 		
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 

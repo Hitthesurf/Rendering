@@ -8,8 +8,7 @@ vec3 GetColor(int MatID)
 	if (MatID == 2) //Blue
 	{
 		return vec3(0.0,0.0,1.0);
-	}
-	
+	}	
 	if (MatID == 3) //Dark Blue
 	{
 		return vec3(0.0,0.0,0.5);
@@ -18,6 +17,14 @@ vec3 GetColor(int MatID)
 	{
 	    return vec3(255.,105.,180.)/255.;
 	}
+    if (MatID == 5) //Blood Red
+    {
+        return vec3(138.,3.,3.)/255.;
+    }
+    if (MatID == 6) //Yellow
+    {
+        return vec3(204.,204.,0.)/255.;
+    }
 	
 
 	return vec3(1.0,1.0,1.0);
