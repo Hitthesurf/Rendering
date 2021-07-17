@@ -130,8 +130,8 @@ int main()
 {
     StopWatch My_Watch;
     My_Watch.Start();
-    sCamera my_cam = {{-2.0,0.,6.0},{1.0,0.0,-0.5},180,64,.5};
-    sLight my_light = {7.,4.,10.};
+    sCamera my_cam = {{-2.0,0.,6.0},{1.0,0.0,-0.5},150,42,.5};//pos, dir, res x, res y, zoom
+    sLight my_light = {7.,4.,10.}; //pos
     
     int elements = my_cam.Res_x*my_cam.Res_y;
     float Grid[elements];
