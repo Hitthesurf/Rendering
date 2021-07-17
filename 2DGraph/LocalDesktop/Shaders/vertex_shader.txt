@@ -1,0 +1,48 @@
+#version 330 core
+layout (location = 0) in float aPos;
+out vec4 vertexColor;
+
+const float pi = 3.14;
+const float e = 2.71;
+const float D = 0.025;
+
+uniform float time;
+
+float f_old(float t, float x)
+{
+    return sin(x*t);
+}
+
+float Zeta(int n)
+{
+    return D*n*n*pi*pi;
+}
+
+float A_(int n)
+{
+    float temp = -1;
+    if (mod(n, 2.0)==0.0)
+    {
+        temp = 1;
+    }
+    
+    return (2)*temp/(pi*n*(1+pow(Zeta(n),2)));
+}
+
+float f(float t, float x)
+{
+    float temp;
+    temp = x*cos(t);
+    for(int n=1;n<10;n++)
+    {
+        temp -= A_(n)*sin(n*pi*x)*(Zeta(n)*sin(t)-cos(t)+ pow(e,-Zeta(n)*t));
+    }
+    return temp;
+}
+
+
+void main()
+{
+    gl_Position = vec4(aPos, 0.5*f(time, (aPos+1)*0.5), 0.0, 1.0);
+    vertexColor = vec4(aPos, 0.0,0.0,1.0)+vec4(aPos,0.0,0.0,0.0);
+}
