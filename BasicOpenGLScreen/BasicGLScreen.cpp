@@ -1,4 +1,4 @@
-//#define GLFW_DLL //Only if dynamic lib
+#define GLFW_DLL //Only if dynamic lib
 #include <glad/glad.h> 
 #include <GLFW/glfw3.h>
 #include <iostream>
