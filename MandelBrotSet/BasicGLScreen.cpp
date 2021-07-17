@@ -7,6 +7,7 @@
 #include <sstream>
 #include <cmath>
 
+
 //Linker section, libs to include
 // -lopengl32 -lglfw3 -lgdi32 -luser32 -lkernel32
 //g++.exe "$(FILE_NAME)" -o $(NAME_PART) -lopengl32 -lglfw3 -lgdi32 -luser32 -lkernel32
@@ -28,12 +29,13 @@ vec2 AddV(vec2 a, vec2 b) {
 
 //Should read in from files
 const char *vertexShaderSource = "#version 330 core\n"
-    "layout (location = 0) in vec2 aPos;\n"
-    "out vec2 FragCoord;"
+    "precision highp float; \n"
+    "layout (location = 0) in vec2 aPos; \n"
+    "out vec2 FragCoord; \n"
     "void main()\n"
     "{\n"
     "   gl_Position = vec4(aPos.x, aPos.y, 0.0, 1.0);\n"
-    "   FragCoord = vec2(aPos.x, aPos.y);"
+    "   FragCoord = vec2(aPos.x, aPos.y); \n"
     "}\n";
 
 void processInput(GLFWwindow *window)

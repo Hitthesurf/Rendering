@@ -2,6 +2,7 @@
 #define MAX_CYCLES 30
 #define UPPER_BOUND 1.
 
+precision highp float;
 
 out vec4 FragColor;
 in vec2 FragCoord;
