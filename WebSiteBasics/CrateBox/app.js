@@ -14,8 +14,9 @@ var vertexShaderText =
 'void main()',
 '{',
 //vec4 Pos = RTA*TTO*vec4(vertPosition.xyz, 1.0)
-'gl_Position = transpose(Proj)*transpose(RTA)*transpose(TTO)*vec4(vertPosition, 1.0);',
-'fragTexCoord = texturePos;',
+'vec4 Pos = transpose(Proj)*transpose(TTO)*transpose(RTA)*transpose(TTO)*vec4(vertPosition, 1.0);',
+'gl_Position = Pos.xyzw;',
+'fragTexCoord = vec2(texturePos.x, 1.0-texturePos.y);',
 '}'
 
 ].join('\n');
@@ -60,15 +61,32 @@ var RTA32 = function(u, v, n) //Rotate to Align(matrix)
                              0.0 ,0.0 ,0.0 ,1.0]);
 }
 
-var OrthoProj32 = function(s) //OrthographicProjection Matrix
+var OrthoProj32 = function(left, right, bottom, up, near, far) //OrthographicProjection Matrix
 {
-    // s = size is the width of the viewport [x_width, y_width, z_width]
     // z part is minus as camera looking -z direction, and webGL prioritses z value closest to -1
-    return new Float32Array([1/s[0], 0.0, 0.0, 0.0,
-                             0.0, 1/s[1], 0.0, 0.0,
-                             0.0, 0.0,-1/s[2], 0.0,
+    
+    
+    return new Float32Array([2/(right-left), 0.0, 0.0, -(right+left)/(right-left),
+                             0.0, 2/(up-bottom), 0.0, -(up+bottom)/(up-bottom),
+                             0.0, 0.0,-2/(far-near), -(far+near)/(far-near),
                              0.0, 0.0, 0.0,    1.0]);
 }
+
+var PerProj32 = function() //Perspective Projection Matrix
+{
+    var near = 3;
+    var far = 20;
+    var xsize = 0.75*near;
+    var ysize = 0.75*near;
+    
+    return new Float32Array([near/xsize, 0, 0, 0,
+                             0,near/ysize, 0, 0, 
+                             0,0,-(far+near)/(far-near),2*far*near/(near-far),
+                             0,0,-1,0]);
+    
+}
+
+//var TAR_Cam32 = function(point, theta, phi) //Translate and rotate around point
 
 var lookAt = function(a) //return RTA32 by calculating other directions
 {
@@ -92,8 +110,16 @@ var lookAt = function(a) //return RTA32 by calculating other directions
     return RTA32(u,v,n);
     
 }
+
+
+var Init = function()
+{
+    //loadTextResource('/shader.vs.glsl')
+    Start(vertexShaderText, fragmentShaderText);
     
-var Init = function() {
+}
+    
+var Start = function(vertexShaderText, fragmentShaderText) {
 
     console.log(RTA32([1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]));
     console.log(lookAt([1.0,1.0,0.3]));
@@ -110,11 +136,20 @@ var Init = function() {
         alert("Your browser does not support webGL");        
     }
     
+    //Add event handelers for canvas
+    canvas.addEventListener('mousedown', onPointerDown);
+    canvas.addEventListener('mouseup', onPointerUp);
+    canvas.addEventListener('mousemove', onPointerMove);
+    
     
     //Start color
     gl.clearColor(0.0, 0.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
+    //Don't draw extra, shape has to be closed
+    gl.enable(gl.CULL_FACE);
+    gl.frontFace(gl.CW);
+    gl.cullFace(gl.BACK);
     console.log("This  is Working");
     
     //Create shader
@@ -158,45 +193,73 @@ var Init = function() {
     
     gl.useProgram(program);
     
+
     //Create Buffers
     var Vertices = 
     [ // X, Y, Z, textCoords X,Y
-        0.0, 0.0, 0.0, 0.0, 1.0, //0
-        0.0, 0.0, 1.0, 0.25, 0.67, //1
-        0.0, 1.0, 0.0, 1.0, 0.0, //2
-        0.0, 1.0, 1.0, 0.50, 0.67, //3
-        1.0, 0.0, 0.0, 1.0, 0.0, //4
-        1.0, 0.0, 1.0, 0.25, 0.33, //5
-        1.0, 1.0, 0.0, 1.0, 0.0, //6
-        1.0, 1.0, 1.0, 0.50, 0.33  //7
+		// Top
+		-1.0, -1.0, 1.0,  0.25, 2/3,
+		-1.0, 1.0, 1.0,   0.5, 2/3,
+		1.0, 1.0, 1.0,    0.5, 1/3,
+		1.0, -1.0, 1.0,   0.25, 1/3,
+
+		// Left
+		-1.0, 1.0, 1.0,   0.5, 2/3,
+		-1.0, 1.0, -1.0,  0.5, 1,
+		-1.0, -1.0, -1.0, 0.25, 1,
+		-1.0, -1.0, 1.0,  0.25, 2/3,
+
+		// Right
+		1.0, 1.0, 1.0,   0.5, 1/3,
+		1.0, 1.0, -1.0,  0.5, 0,
+		1.0, -1.0, -1.0, 0.25, 0,
+		1.0, -1.0, 1.0,   0.25, 1/3,
+
+		// Back
+		1.0, 1.0, 1.0,   0.5, 1/3,
+		1.0, 1.0, -1.0,   0.75, 1/3,
+		-1.0, 1.0, -1.0,   0.75, 2/3,
+		-1.0, 1.0, 1.0,   0.5, 2/3,
+
+		// Front
+		1.0, -1.0, 1.0,   0.25, 1/3,
+		1.0, -1.0, -1.0,   0, 1/3,
+		-1.0, -1.0, -1.0,  0, 2/3,
+		-1.0, -1.0, 1.0,   0.25, 2/3,
+
+		// Bottom
+		-1.0, -1.0, -1.0,   1, 2/3,
+		-1.0, 1.0, -1.0,    0.75, 2/3,
+		1.0, 1.0, -1.0,    0.75, 1/3,
+		1.0, -1.0, -1.0,    1, 1/3,
         
     ];
     
     var Indices = 
     [
-        //Bottom
-        0, 4, 2,
-        4, 2, 6,
-        
-        //Front
-        0, 4, 1,
-        4, 1, 5,
-        
-        //Right
-        4, 5, 6,
-        5, 6, 7,
-        
-        //Left
-        0, 2, 1,
-        2, 1, 3,
-        
-        //Back
-        2, 6, 3,
-        6, 3, 7,
-        
-        //Top
-        1, 5, 3,
-        5, 3, 7   
+		// Top
+		0, 1, 2,
+		0, 2, 3,
+
+		// Left
+		5, 4, 6,
+		6, 4, 7,
+
+		// Right
+		8, 9, 10,
+		8, 10, 11,
+
+		// Back
+		13, 12, 14,
+		15, 14, 12,
+
+		// Front
+		16, 17, 18,
+		16, 18, 19,
+
+		// Bottom
+		21, 20, 22,
+		22, 20, 23
     ]
     
     //Send data to GPU buffer
@@ -251,17 +314,25 @@ var Init = function() {
     
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE,
     document.getElementById('DirtBlock'));
-
+    
+    //Other vaules
+    //var theta = 3.14/4; //Radians
+    //var phi = 3.14/4 //Radians
+    
     //Get Uniform Locations
     var mat4TTOUniformLocation = gl.getUniformLocation(program, 'TTO');
     var mat4RTAUniformLocation = gl.getUniformLocation(program, 'RTA');
     var mat4ProjUniformLocation = gl.getUniformLocation(program, 'Proj');
+
     
     //Set Uniforms
     
-    var TTO = TTO32([-0.25,-0.25,1.25]);
-    var RTA = lookAt([1,1,-1]);
-    var Proj = OrthoProj32([2,2,2]);
+    var cam_dir = [-Math.cos(phi)*Math.cos(theta),-Math.cos(phi)*Math.sin(theta),-Math.sin(phi)];
+    var TTO = TTO32([0,0,0]);
+    var RTA = lookAt(cam_dir);
+    //var TAR_Cam = 
+    var Proj = OrthoProj32(-2.5,2.5,-2.5,2.5,-2.5,2.5);
+    //Proj = PerProj32();
     
     gl.uniformMatrix4fv(mat4TTOUniformLocation, gl.FALSE, TTO);
     gl.uniformMatrix4fv(mat4RTAUniformLocation, gl.FALSE, RTA);
@@ -269,6 +340,9 @@ var Init = function() {
     
     // Main loop
     var loop = function () {
+        
+
+        //Start Up
         gl.useProgram(program);
         
         gl.clearColor(0.0, 1.0, 1.0, 1.0);
@@ -277,7 +351,14 @@ var Init = function() {
         gl.bindTexture(gl.TEXTURE_2D, boxTexture);
 		gl.activeTexture(gl.TEXTURE0);
 
+        //Updates
+        //theta = performance.now() / 1000;
+        //phi = 0.5*Math.sin(performance.now() / 2000);
+        cam_dir = [-Math.cos(phi)*Math.cos(theta),-Math.cos(phi)*Math.sin(theta),-Math.sin(phi)];
+        RTA = lookAt(cam_dir); //camera is moving around cube
+        gl.uniformMatrix4fv(mat4RTAUniformLocation, gl.FALSE, RTA);
         
+        //Draw
         gl.drawElements(gl.TRIANGLES, Indices.length, gl.UNSIGNED_SHORT, 0);
         requestAnimationFrame(loop)
     };
