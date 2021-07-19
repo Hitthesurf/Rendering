@@ -7,14 +7,15 @@ var vertexShaderText =
 'uniform mat4 TTO;',
 'uniform mat4 RTA;',
 'uniform mat4 Proj;',
-'highp mat4 transpose(in highp mat4 inMatrix) {highp vec4 i0 = inMatrix[0];highp vec4 i1 = inMatrix[1];highp vec4 i2 = inMatrix[2];highp vec4 i3 = inMatrix[3];',
+'uniform mat4 TTR; uniform mat4 RS; uniform mat4 TTRB;',
+'highp mat4 T(in highp mat4 inMatrix) {highp vec4 i0 = inMatrix[0];highp vec4 i1 = inMatrix[1];highp vec4 i2 = inMatrix[2];highp vec4 i3 = inMatrix[3];',
 'highp mat4 outMatrix = mat4(vec4(i0.x, i1.x, i2.x, i3.x),vec4(i0.y, i1.y, i2.y, i3.y),vec4(i0.z, i1.z, i2.z, i3.z),vec4(i0.w, i1.w, i2.w, i3.w) );',
 
 'return outMatrix;}',
 'void main()',
 '{',
 //vec4 Pos = RTA*TTO*vec4(vertPosition.xyz, 1.0)
-'vec4 Pos = transpose(Proj)*transpose(TTO)*transpose(RTA)*transpose(TTO)*vec4(vertPosition, 1.0);',
+'vec4 Pos = T(Proj)*T(RTA)*T(TTO)*T(TTRB)*T(RS)*T(TTR)*vec4(vertPosition, 1.0);',
 'gl_Position = Pos.xyzw;',
 'fragTexCoord = vec2(texturePos.x, 1.0-texturePos.y);',
 '}'
@@ -88,6 +89,12 @@ var PerProj32 = function() //Perspective Projection Matrix
 
 //var TAR_Cam32 = function(point, theta, phi) //Translate and rotate around point
 
+var cross = function(u, a)
+{
+ //calculate uxa
+    return [u[1]*a[2]-u[2]*a[1], u[2]*a[0]-u[0]*a[2], u[0]*a[1] - u[1]*a[0]];
+}
+
 var lookAt = function(a) //return RTA32 by calculating other directions
 {
     //Easy and quick to use, but cannot look vertically up or down
@@ -105,9 +112,16 @@ var lookAt = function(a) //return RTA32 by calculating other directions
     u[1] = u[1]/u_length;
     
     //Get Vertical
-    var v = [u[1]*a[2]-u[2]*a[1], u[2]*a[0]-u[0]*a[2], u[0]*a[1] - u[1]*a[0]];
+    var v = cross(u,a);
     var n = [-a[0],-a[1],-a[2]];
     return RTA32(u,v,n);
+    
+}
+
+var LookAtAdv = function(a)
+{
+    //calculated using sphere coords
+    
     
 }
 
@@ -125,6 +139,7 @@ var Start = function(vertexShaderText, fragmentShaderText) {
     console.log(lookAt([1.0,1.0,0.3]));
     
     var canvas = document.getElementById('Render_Surface');
+    var btnProj = document.getElementById('Proj');
     var gl=canvas.getContext('webgl');
     
     if (!gl) {
@@ -140,6 +155,8 @@ var Start = function(vertexShaderText, fragmentShaderText) {
     canvas.addEventListener('mousedown', onPointerDown);
     canvas.addEventListener('mouseup', onPointerUp);
     canvas.addEventListener('mousemove', onPointerMove);
+    
+    btnProj.addEventListener('click', buttonClickProj);
     
     
     //Start color
@@ -323,20 +340,40 @@ var Start = function(vertexShaderText, fragmentShaderText) {
     var mat4TTOUniformLocation = gl.getUniformLocation(program, 'TTO');
     var mat4RTAUniformLocation = gl.getUniformLocation(program, 'RTA');
     var mat4ProjUniformLocation = gl.getUniformLocation(program, 'Proj');
+    
+    //Rotate scene
+    var mat4TTR_UL = gl.getUniformLocation(program, 'TTR');  //Translate to rotation point
+    var mat4RS_UL  = gl.getUniformLocation(program, 'RS');  //Rotate Scene
+    var mat4TTRB_UL = gl.getUniformLocation(program, 'TTRB');//Translate to starting point
 
     
     //Set Uniforms
     
-    var cam_dir = [-Math.cos(phi)*Math.cos(theta),-Math.cos(phi)*Math.sin(theta),-Math.sin(phi)];
-    var TTO = TTO32([0,0,0]);
-    var RTA = lookAt(cam_dir);
-    //var TAR_Cam = 
-    var Proj = OrthoProj32(-2.5,2.5,-2.5,2.5,-2.5,2.5);
-    //Proj = PerProj32();
+    //var dev = [-Math.cos(phi)*Math.cos(theta),-Math.cos(phi)*Math.sin(theta),-Math.sin(phi)];//Minus to always look at ROT point
+    var dev = [-0.001,0,-1];//Not constant
+    var cam_pos = [0,0,5];
+    var rot_pos = [0.0,0.1,0];
+    var cam_dir = [rot_pos[0]-cam_pos[0], rot_pos[1]-cam_pos[1], rot_pos[2]-cam_pos[2]]; //Calculalte
     
+    var TTR = TTO32(rot_pos);
+    var RS = lookAt(dev); //Not Constant
+    var TTRB = TTO32([-rot_pos[0], -rot_pos[1], -rot_pos[2]]); //Should be minus
+    var TTO = TTO32(cam_pos);
+    var RTA = lookAt(cam_dir);
+    var Proj = OrthoProj32(-2.5,2.5,-2.5,2.5,-2.5,8.5);
+    
+    if (Orthographic == false)
+    {
+        Proj = PerProj32();
+    }
     gl.uniformMatrix4fv(mat4TTOUniformLocation, gl.FALSE, TTO);
     gl.uniformMatrix4fv(mat4RTAUniformLocation, gl.FALSE, RTA);
     gl.uniformMatrix4fv(mat4ProjUniformLocation, gl.FALSE, Proj);
+    
+    
+    gl.uniformMatrix4fv(mat4TTR_UL, gl.FALSE, TTR);
+    gl.uniformMatrix4fv(mat4RS_UL, gl.FALSE, RS);
+    gl.uniformMatrix4fv(mat4TTRB_UL, gl.FALSE, TTRB);
     
     // Main loop
     var loop = function () {
@@ -354,9 +391,17 @@ var Start = function(vertexShaderText, fragmentShaderText) {
         //Updates
         //theta = performance.now() / 1000;
         //phi = 0.5*Math.sin(performance.now() / 2000);
-        cam_dir = [-Math.cos(phi)*Math.cos(theta),-Math.cos(phi)*Math.sin(theta),-Math.sin(phi)];
-        RTA = lookAt(cam_dir); //camera is moving around cube
-        gl.uniformMatrix4fv(mat4RTAUniformLocation, gl.FALSE, RTA);
+        if (Orthographic)
+        {
+            Proj = OrthoProj32(-2.5,2.5,-2.5,2.5,-2.5,8.5);
+        } else {
+            Proj = PerProj32();
+        }
+        
+        dev = [-Math.cos(phi)*Math.cos(theta),-Math.cos(phi)*Math.sin(theta),-Math.sin(phi)];
+        RS = lookAt(dev); //camera is moving around cube
+        gl.uniformMatrix4fv(mat4RS_UL, gl.FALSE, RS);
+        gl.uniformMatrix4fv(mat4ProjUniformLocation, gl.FALSE, Proj);
         
         //Draw
         gl.drawElements(gl.TRIANGLES, Indices.length, gl.UNSIGNED_SHORT, 0);
