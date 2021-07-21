@@ -1,4 +1,7 @@
 //Using this camera is always facing in -Z with right the x-axis, but scene moves around camera
+var Ref_URL = "https://hitthesurf.github.io/Rendering/WebSiteBasics/CrateBox/"
+
+
 var TTO32 = function(cam_pos) //Transform to origin(matrix)
 {
     //cam_pos is of form [1,3,2]
@@ -91,10 +94,10 @@ var lookAt = function(a) //return RTA32 by calculating other directions
 
 var Init = function()
 {
-    loadTextResource('/ShaderVS.txt', function (vsError, vsText) 
+    loadTextResource(Ref_URL + '/ShaderVS.txt', function (vsError, vsText) 
     {
        if (vsError) {alert('vs shader failed to load'); console.error(vsText);}
-       else { loadTextResource('/ShaderFS.txt', function (fsError, fsText) {
+       else { loadTextResource(Ref_URL + '/ShaderFS.txt', function (fsError, fsText) {
        
        if (fsError) {alert('fs shader failed to load'); console.error(fsText);}
        else { Start(vsText, fsText)}               
