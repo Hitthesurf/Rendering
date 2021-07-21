@@ -91,10 +91,10 @@ var lookAt = function(a) //return RTA32 by calculating other directions
 
 var Init = function()
 {
-    loadTextResource('/Shader.vs.glsl', function (vsError, vsText) 
+    loadTextResource('/ShaderVS.txt', function (vsError, vsText) 
     {
        if (vsError) {alert('vs shader failed to load'); console.error(vsText);}
-       else { loadTextResource('/Shader.fs.glsl', function (fsError, fsText) {
+       else { loadTextResource('/ShaderFS.txt', function (fsError, fsText) {
        
        if (fsError) {alert('fs shader failed to load'); console.error(fsText);}
        else { Start(vsText, fsText)}               
