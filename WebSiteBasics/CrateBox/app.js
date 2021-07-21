@@ -1,39 +1,3 @@
-var vertexShaderText = 
-[
-'precision highp float;',
-'varying vec2 fragTexCoord;',
-'attribute vec3 vertPosition;',
-'attribute vec2 texturePos;',
-'uniform mat4 TTO;',
-'uniform mat4 RTA;',
-'uniform mat4 Proj;',
-'uniform mat4 TTR; uniform mat4 RS; uniform mat4 TTRB;',
-'highp mat4 T(in highp mat4 inMatrix) {highp vec4 i0 = inMatrix[0];highp vec4 i1 = inMatrix[1];highp vec4 i2 = inMatrix[2];highp vec4 i3 = inMatrix[3];',
-'highp mat4 outMatrix = mat4(vec4(i0.x, i1.x, i2.x, i3.x),vec4(i0.y, i1.y, i2.y, i3.y),vec4(i0.z, i1.z, i2.z, i3.z),vec4(i0.w, i1.w, i2.w, i3.w) );',
-
-'return outMatrix;}',
-'void main()',
-'{',
-//vec4 Pos = RTA*TTO*vec4(vertPosition.xyz, 1.0)
-'vec4 Pos = T(Proj)*T(RTA)*T(TTO)*T(TTRB)*T(RS)*T(TTR)*vec4(vertPosition, 1.0);',
-'gl_Position = Pos.xyzw;',
-'fragTexCoord = vec2(texturePos.x, 1.0-texturePos.y);',
-'}'
-
-].join('\n');
-
-var fragmentShaderText = 
-[
-'precision highp float;',
-'varying vec2 fragTexCoord;',
-'uniform sampler2D sampler0;',
-'void main()',
-'{',
-'gl_FragColor = texture2D(sampler0, fragTexCoord);',
-'}'
-
-].join('\n');
-
 //Using this camera is always facing in -Z with right the x-axis, but scene moves around camera
 var TTO32 = function(cam_pos) //Transform to origin(matrix)
 {
@@ -60,6 +24,12 @@ var RTA32 = function(u, v, n) //Rotate to Align(matrix)
                              v[0],v[1],v[2],0.0,
                              n[0],n[1],n[2],0.0,
                              0.0 ,0.0 ,0.0 ,1.0]);
+}
+
+var insRTA32 = function(u, v, n) //Rotate to align 
+{
+    //Transpose of the one above
+    
 }
 
 var OrthoProj32 = function(left, right, bottom, up, near, far) //OrthographicProjection Matrix
@@ -118,29 +88,30 @@ var lookAt = function(a) //return RTA32 by calculating other directions
     
 }
 
-var LookAtAdv = function(a)
-{
-    //calculated using sphere coords
-    
-    
-}
-
 
 var Init = function()
 {
-    //loadTextResource('/shader.vs.glsl')
-    Start(vertexShaderText, fragmentShaderText);
+    loadTextResource('/Shader.vs.glsl', function (vsError, vsText) 
+    {
+       if (vsError) {alert('vs shader failed to load'); console.error(vsText);}
+       else { loadTextResource('/Shader.fs.glsl', function (fsError, fsText) {
+       
+       if (fsError) {alert('fs shader failed to load'); console.error(fsText);}
+       else { Start(vsText, fsText)}               
+       })}       
+    }
+    )
     
 }
     
 var Start = function(vertexShaderText, fragmentShaderText) {
 
-    console.log(RTA32([1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]));
-    console.log(lookAt([1.0,1.0,0.3]));
     
     var canvas = document.getElementById('Render_Surface');
-    var btnProj = document.getElementById('Proj');
+    var btnProj = document.getElementById('btnProj');
+    var btnResetCam = document.getElementById('btnResetCam');
     var gl=canvas.getContext('webgl');
+    
     
     if (!gl) {
         console.log("WebGL not supported, using experimental version");
@@ -151,18 +122,22 @@ var Start = function(vertexShaderText, fragmentShaderText) {
         alert("Your browser does not support webGL");        
     }
     
+    //Setup for objects
+    btnProj.innerText = GetbtnProjText(Orthographic);
+    
     //Add event handelers for canvas
     canvas.addEventListener('mousedown', onPointerDown);
     canvas.addEventListener('mouseup', onPointerUp);
     canvas.addEventListener('mousemove', onPointerMove);
     
     btnProj.addEventListener('click', buttonClickProj);
-    
+    btnResetCam.addEventListener('click', function() {ResetCamera(cam_dir);});
     
     //Start color
     gl.clearColor(0.0, 0.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.enable(gl.DEPTH_TEST);
+    
     //Don't draw extra, shape has to be closed
     gl.enable(gl.CULL_FACE);
     gl.frontFace(gl.CW);
@@ -351,9 +326,11 @@ var Start = function(vertexShaderText, fragmentShaderText) {
     
     //var dev = [-Math.cos(phi)*Math.cos(theta),-Math.cos(phi)*Math.sin(theta),-Math.sin(phi)];//Minus to always look at ROT point
     var dev = [-0.001,0,-1];//Not constant
-    var cam_pos = [0,0,5];
-    var rot_pos = [0.0,0.1,0];
+    var cam_pos = [4,4,4];
+    var rot_pos = [0.0,0,0];
     var cam_dir = [rot_pos[0]-cam_pos[0], rot_pos[1]-cam_pos[1], rot_pos[2]-cam_pos[2]]; //Calculalte
+    //Find theta and phi
+    ResetCamera(cam_dir);
     
     var TTR = TTO32(rot_pos);
     var RS = lookAt(dev); //Not Constant
@@ -388,9 +365,6 @@ var Start = function(vertexShaderText, fragmentShaderText) {
         gl.bindTexture(gl.TEXTURE_2D, boxTexture);
 		gl.activeTexture(gl.TEXTURE0);
 
-        //Updates
-        //theta = performance.now() / 1000;
-        //phi = 0.5*Math.sin(performance.now() / 2000);
         if (Orthographic)
         {
             Proj = OrthoProj32(-2.5,2.5,-2.5,2.5,-2.5,8.5);
@@ -400,6 +374,8 @@ var Start = function(vertexShaderText, fragmentShaderText) {
         
         dev = [-Math.cos(phi)*Math.cos(theta),-Math.cos(phi)*Math.sin(theta),-Math.sin(phi)];
         RS = lookAt(dev); //camera is moving around cube
+        
+        //update uniforms
         gl.uniformMatrix4fv(mat4RS_UL, gl.FALSE, RS);
         gl.uniformMatrix4fv(mat4ProjUniformLocation, gl.FALSE, Proj);
         
