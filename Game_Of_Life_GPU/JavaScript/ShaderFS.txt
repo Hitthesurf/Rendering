@@ -1,0 +1,31 @@
+#version 300 es
+precision highp float;
+in vec2 fragTexCoord;
+uniform highp isampler2D sampler0;
+out int fragColor;
+
+uniform vec2 size;
+
+
+
+int get(int x, int y)
+{ //x and y are offset values
+    return int(texture(sampler0, fragTexCoord.xy + vec2(x,y)/size).x);
+}
+
+int get_next()
+{ //1 if alive, 0 if dead for next iteration
+   
+    int total = get(1,1)+get(1,0)+get(1,-1)+get(0,-1)+
+                  get(-1,-1)+get(-1,0)+get(-1,1)+get(0,1);
+    if (total == 3) {return 1;}
+    else if (total == 2) {return get(0,0);}
+    else {return 0;}
+}
+
+void main()
+{
+
+//fragColor = 1;//vec4(vec3(get_next()), 1.0);
+fragColor = get_next();
+}
