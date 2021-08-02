@@ -389,7 +389,7 @@ var Start = function(vertexShaderText, fragmentShaderText) {
         }
         
         //Update canvas size
-        update_Canvas_Size();
+        //update_Canvas_Size();
                 
         requestAnimationFrame(loop);
                        
