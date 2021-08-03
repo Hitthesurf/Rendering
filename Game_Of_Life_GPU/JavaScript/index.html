@@ -1,23 +1,24 @@
 <html>
     <head>
-        <title> WebGL2 - Dirt Block Frame Buffer Tests </title>
+        <title> Game Of Life GPU Frame Buffer </title>
     </head>
     <body onload="Init()">
         <canvas id="Game_Of_Life_Grid" width="1000" height="700">
          Your browser doess not support HTML5
         </canvas>
         <br>
-        
         <button id="btnStartStop">Start/Stop</button>
         <button id="btnResetGrid">Reset Grid</button>
         <i>Generations per render = </i>
-        <input type="number" id="numSteps" value="2" style="width: 4em">
+        <input type="number" id="numSteps" value="1" style="width: 4em">
         <i>X_Size = </i>
         <input type="number" id="numXSize" value="1000" style="width: 5em">
         <i>Y_Size = </i>
         <input type="number" id="numYSize" value="700" style="width: 5em">
         <i>Reset to change grid size, </i>
-        <i id="lblCanvas">Canvas Resolution is (,) <i>
+        <i id="lblCanvas">Canvas Resolution is (,) </i>
+        <i id="lblFPS">, FPS: </i>
+        
         <script src="loadfile.js"></script>
         <script src="app.js"></script>
         
