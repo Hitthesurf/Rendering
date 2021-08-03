@@ -70,7 +70,7 @@ var Start = function(vertexShaderText, fragmentShaderText) {
     var numXSize = document.getElementById('numXSize');
     var numYSize = document.getElementById('numYSize');
     var lblCanvas = document.getElementById('lblCanvas');
-    
+    var lblFPS = document.getElementById('lblFPS');
     
     var gl = canvas.getContext("webgl2");
     if (!gl) { 
@@ -364,10 +364,20 @@ var Start = function(vertexShaderText, fragmentShaderText) {
     Clear_Canvas();
     
     //Update canvas size
-    update_Canvas_Size();
-    
+    update_Canvas_Size();    
     Draw(Grid1);
-    var loop = function () {
+    
+    
+    var then = 0;
+    var deltaTime = 1.0;
+    var loop = function (now) {
+        
+        //Calculate fps
+        now *= 0.001; //Convert to seconds
+        deltaTime = now - then;
+        then = now;
+        //console.log(lblFPS.innerHTML);
+        lblFPS.innerHTML = "FPS: " + String(1/deltaTime);
         
         if (Play){
             for (let i = 0; i < steps; i++) {
