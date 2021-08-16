@@ -1,0 +1,35 @@
+const float PI = 3.141592654;
+const float MAX_N = 30.;
+const float t = 3.0;
+
+float Q_n(float n_x, float n_y)
+{
+    return PI*pow(n_x*n_x+n_y*n_y, 0.5);
+}
+
+float B_n(float n_x, float n_y)
+{
+    return 4.*cos((n_x+n_y)*PI)/(n_x*n_y*PI*PI);
+}
+
+
+highp float f_scale(highp float x,highp float y)
+{
+float total = 0.0;
+for(float n_x=1.;n_x<MAX_N;n_x++)
+{
+for (float n_y=1.; n_y<MAX_N;n_y++)
+{
+  total += B_n(n_x,n_y)*sin(n_x*PI*x)*sin(n_y*PI*y)*cos(
+           Q_n(n_x,n_y)*t);
+}
+}
+return total;
+}
+
+highp float f(highp float x,highp float y)
+{
+    return 2.*f_scale((x+2.)/4.,(y+2.)/4.);
+}
+
+
